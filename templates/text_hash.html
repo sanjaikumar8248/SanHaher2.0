@@ -1,0 +1,3 @@
+{% extends "base.html" %}{% block content %}<div class="page-grid"><div class="card"><h2>Enter text</h2>
+<form method="post"><label>Text</label><textarea name="text" placeholder="Hello Sanjai">{{text}}</textarea><button>Generate Hashes</button></form></div>
+{% if result %}<div class="card"><h2>Results</h2><table>{% for k,v in result.items() %}<tr><th>{{k}}</th><td class="mono hash">{{v}}</td></tr>{% endfor %}</table><div class="footer-note">Base64 is encoding, not hashing.</div></div>{% endif %}</div>{% endblock %}

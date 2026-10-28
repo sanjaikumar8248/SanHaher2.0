@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% block content %}
+<div class="card" style="max-width:620px;margin:auto">
+<div class="kicker">MEMBER REGISTRATION</div><h2>Request Room Access</h2>
+<p class="muted">Enter the permanent Room ID given by the Authority. Registration remains pending until Authority approval.</p>
+<form method="post">
+<label>Full Name</label><input name="name" required>
+<label>Email</label><input name="email" type="email" required>
+<label>Mobile Number</label><input name="mobile" required>
+<label>Role</label><select name="role"><option>EXAMINER</option><option>ANALYST</option><option>INVESTIGATOR</option></select>
+<label>Password</label><input name="password" type="password" required minlength="8">
+<label>Confirm Password</label><input name="confirm_password" type="password" required minlength="8">
+<label>Room ID</label><input name="room_code" required placeholder="Permanent Room ID">
+<button>Submit Membership Request</button>
+</form>
+<p class="muted" style="margin-top:1rem"><a href="{{url_for('login')}}">Member Login</a> · <a href="{{url_for('authority_login')}}">Authority Login</a></p>
+</div>{% endblock %}

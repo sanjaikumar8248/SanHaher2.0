@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% block content %}
+<div class="card"><div class="kicker">Working Version Editor</div><h2>Edit Evidence #{{evidence.evidence_no}} — {{evidence.name}}</h2>
+<p class="muted">Saving creates a new version. The original evidence and its SHA-256 baseline are always preserved.</p>
+<form method="post"><label>Content</label><textarea name="content" style="min-height:320px">{{text}}</textarea><button>Save as New Version</button></form>
+<p><a class="button secondary" href="{{url_for('evidence_versions',case_id=case.case_id,evidence_id=evidence.id)}}">View Versions</a> <a class="button secondary" href="{{url_for('case_detail',case_id=case.case_id)}}">Back to Case</a></p>
+</div>{% endblock %}

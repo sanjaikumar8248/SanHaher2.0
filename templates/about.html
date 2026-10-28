@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block content %}<div class="page-grid"><div class="card"><div class="kicker">Architecture</div><h2>SanHasher 2.0</h2>
+<p>Integrated cryptographic analysis and digital-evidence integrity framework for cyber-forensic learning and research.</p>
+<h3>Supported hashes</h3><p>{{algorithms|join(', ')}}</p><h3>Base64</h3><p>Encoding, not hashing.</p></div>
+<div class="card"><div class="kicker">Important limitations</div><h2>Forensic correctness</h2><ul>
+<li>Hash values are fingerprints; they are not decryptable plaintext.</li><li>Dictionary matching tests candidates from a supplied wordlist.</li>
+<li>Hash identification is probabilistic; length alone cannot prove an algorithm.</li>
+<li>The current app copies uploaded evidence into its case directory and is a research prototype.</li>
+<li>An integrity mismatch indicates changed or missing content; it does not establish who changed it or why.</li>
+</ul></div></div>{% endblock %}

@@ -1,0 +1,148 @@
+{% extends "base.html" %}{% block content %}<div class="card"><div class="kicker">Case</div><h2>{{case.case_id}} — {{case.title}}</h2>
+<p>Analyst: {{case.analyst or '—'}} · Created: {{case.created_at}} · Status: <b>{{case.status}}</b></p>
+<a class="button secondary" href="{{url_for('case_merkle',case_id=case.case_id)}}">Merkle Verification</a>
+<a class="button secondary" href="{{url_for('case_custody',case_id=case.case_id)}}">Chain of Custody / Activity</a>
+<a class="button secondary" href="{{url_for('reports')}}">Reports</a> <a class="button secondary" href="{{url_for('recently_deleted',case_id=case.case_id)}}">Recently Deleted</a>{% if current_user and current_user.role == 'HIGHER_AUTHORITY' %}<span class="badge">AUTHORITY DELETE CONTROL</span>{% endif %}</div>
+<div class="page-grid" style="margin-top:20px"><div class="card full"><div class="kicker">CASE TEAM</div><h2>Assigned Investigators / Analysts</h2>
+{% if current_user.role == 'HIGHER_AUTHORITY' %}
+<form method="post" action="{{url_for('case_members_manage',case_id=case.case_id)}}" style="display:grid;grid-template-columns:2fr 1fr auto;gap:10px;align-items:end">
+<div><label>Room Member</label><select name="user_id" required><option value="">Select member</option>{% for u in room_users if u.role != 'HIGHER_AUTHORITY' and u.verified %}<option value="{{u.id}}">{{u.name}} — {{u.role}}</option>{% endfor %}</select></div>
+<div><label>Case Role</label><select name="case_role"><option value="MEMBER">MEMBER</option><option value="TEAM_LEAD">TEAM_LEAD</option></select></div>
+<button name="action" value="ADD">Assign</button></form>
+{% endif %}
+<table><tr><th>Name</th><th>Room Role</th><th>Case Role</th><th>Assigned</th>{% if current_user.role == 'HIGHER_AUTHORITY' %}<th>Action</th>{% endif %}</tr>
+{% for m in members %}<tr><td>{{m.name}}</td><td>{{m.room_role}}</td><td><b>{{m.case_role}}</b></td><td>{{m.assigned_at}}</td>{% if current_user.role == 'HIGHER_AUTHORITY' %}<td><form method="post" action="{{url_for('case_members_manage',case_id=case.case_id)}}"><input type="hidden" name="user_id" value="{{m.user_id}}"><button class="danger" name="action" value="REMOVE">Remove</button></form></td>{% endif %}</tr>{% endfor %}
+</table></div>
+<div class="card"><h2>Add Evidence (small files)</h2><p class="muted">Best for files up to roughly 150 MB — a single quick upload.</p><form method="post" enctype="multipart/form-data">
+<label>Evidence File</label><input type="file" name="evidence" required><label>Analyst</label><input name="analyst" value="{{case.analyst or 'SanHasher Analyst'}}">
+<label>Notes</label><textarea name="notes" placeholder="Collection or handling note"></textarea><button>Register Evidence</button></form></div>
+
+<div class="card full" id="largeUploadCard"><h2>Add Large Evidence (GB-scale, resumable)</h2>
+<p class="muted">For multi-gigabyte files — forensic disk images, large exports. The file is sent in chunks and hashed after assembly, never held fully in memory. If your connection drops or you reload the page, pick the same file again and the upload resumes from where it left off instead of restarting.</p>
+<label>Evidence File</label><input type="file" id="largeFileInput">
+<label>Notes</label><textarea id="largeNotes" placeholder="Collection or handling note"></textarea>
+<div style="display:flex;gap:10px;align-items:center;margin-top:10px">
+<button type="button" id="largeUploadStart">Start / Resume Upload</button>
+<button type="button" id="largeUploadCancel" class="danger" style="display:none">Cancel &amp; Discard</button>
+</div>
+<div id="largeUploadProgressWrap" style="display:none;margin-top:14px">
+<div style="background:#0d1b12;border:1px solid var(--line);border-radius:8px;overflow:hidden;height:22px">
+<div id="largeUploadBar" style="background:var(--accent);height:100%;width:0%;transition:width .2s"></div>
+</div>
+<p class="muted" id="largeUploadStatus" style="margin-top:6px">Idle.</p>
+</div>
+</div>
+
+<script>
+(function(){
+  const CHUNK_SIZE = 16 * 1024 * 1024; // 16 MB per chunk
+  const caseId = {{ case.case_id|tojson }};
+  const fileInput = document.getElementById('largeFileInput');
+  const notesInput = document.getElementById('largeNotes');
+  const startBtn = document.getElementById('largeUploadStart');
+  const cancelBtn = document.getElementById('largeUploadCancel');
+  const wrap = document.getElementById('largeUploadProgressWrap');
+  const bar = document.getElementById('largeUploadBar');
+  const statusEl = document.getElementById('largeUploadStatus');
+
+  function storageKey(file) {
+    return 'sanhash_upload:' + caseId + ':' + file.name + ':' + file.size + ':' + file.lastModified;
+  }
+  function setProgress(received, total, label) {
+    wrap.style.display = 'block';
+    const pct = total ? Math.min(100, Math.round((received / total) * 100)) : 0;
+    bar.style.width = pct + '%';
+    statusEl.textContent = label || (pct + '% — ' + received.toLocaleString() + ' / ' + total.toLocaleString() + ' bytes');
+  }
+  async function jsonFetch(url, opts) {
+    const res = await fetch(url, opts);
+    let data = {};
+    try { data = await res.json(); } catch (e) {}
+    if (!res.ok) { const err = new Error(data.error || ('HTTP ' + res.status)); err.data = data; err.status = res.status; throw err; }
+    return data;
+  }
+  async function uploadChunkWithRetry(sessionId, offset, blob, maxRetries) {
+    let attempt = 0;
+    while (true) {
+      try {
+        return await jsonFetch('/case/' + encodeURIComponent(caseId) + '/evidence/chunked/' + sessionId, {
+          method: 'PATCH',
+          headers: { 'Upload-Offset': String(offset), 'Content-Type': 'application/octet-stream' },
+          body: blob
+        });
+      } catch (err) {
+        if (err.status === 409 && err.data && typeof err.data.offset === 'number') {
+          return { offset: err.data.offset, resync: true };
+        }
+        attempt++;
+        if (attempt > maxRetries) throw err;
+        statusEl.textContent = 'Network hiccup — retrying chunk (attempt ' + attempt + ')…';
+        await new Promise(r => setTimeout(r, Math.min(1000 * 2 ** attempt, 15000)));
+      }
+    }
+  }
+
+  async function runUpload() {
+    const file = fileInput.files[0];
+    if (!file) { alert('Choose a file first.'); return; }
+    startBtn.disabled = true; cancelBtn.style.display = 'inline-block';
+    const key = storageKey(file);
+    let sessionId = localStorage.getItem(key);
+    let offset = 0;
+    try {
+      if (sessionId) {
+        try {
+          const st = await jsonFetch('/case/' + encodeURIComponent(caseId) + '/evidence/chunked/' + sessionId);
+          offset = st.offset; setProgress(offset, file.size, 'Resuming previous upload…');
+        } catch (e) {
+          sessionId = null; // stale/unknown session on the server — start fresh
+        }
+      }
+      if (!sessionId) {
+        const started = await jsonFetch('/case/' + encodeURIComponent(caseId) + '/evidence/chunked/start', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: file.name, total_size: file.size, notes: notesInput.value })
+        });
+        sessionId = started.session_id; offset = started.offset || 0;
+        localStorage.setItem(key, sessionId);
+      }
+      while (offset < file.size) {
+        const end = Math.min(offset + CHUNK_SIZE, file.size);
+        const blob = file.slice(offset, end);
+        const result = await uploadChunkWithRetry(sessionId, offset, blob, 5);
+        offset = result.offset;
+        setProgress(offset, file.size);
+      }
+      statusEl.textContent = 'Finalizing — hashing assembled file…';
+      const done = await jsonFetch('/case/' + encodeURIComponent(caseId) + '/evidence/chunked/' + sessionId + '/finish', { method: 'POST' });
+      localStorage.removeItem(key);
+      statusEl.textContent = 'Done — evidence registered (SHA-256: ' + done.sha256.slice(0, 16) + '…). Reloading…';
+      setTimeout(() => { window.location = done.redirect; }, 800);
+    } catch (err) {
+      statusEl.textContent = 'Upload failed: ' + err.message + '. Pick the same file again to resume.';
+      startBtn.disabled = false;
+    }
+  }
+
+  startBtn.addEventListener('click', runUpload);
+  cancelBtn.addEventListener('click', async function(){
+    const file = fileInput.files[0];
+    if (!file) return;
+    const key = storageKey(file);
+    const sessionId = localStorage.getItem(key);
+    if (sessionId && confirm('Discard this in-progress upload? The partial file will be deleted.')) {
+      try { await fetch('/case/' + encodeURIComponent(caseId) + '/evidence/chunked/' + sessionId, { method: 'DELETE' }); } catch (e) {}
+      localStorage.removeItem(key);
+      wrap.style.display = 'none'; cancelBtn.style.display = 'none'; startBtn.disabled = false;
+      statusEl.textContent = 'Cancelled.';
+    }
+  });
+})();
+</script>
+<div class="card"><h2>Integrity Actions</h2><p>Registered evidence receives a SHA-256 fingerprint and manifest entry.</p>
+<form method="post" action="{{url_for('case_verify',case_id=case.case_id)}}"><button>Verify All Evidence</button></form></div>
+<div class="card full"><h2>Evidence Manifest</h2>{% if evidence %}<table><tr><th>No.</th><th>Evidence</th><th>Size</th><th>SHA-256</th><th>Integrity</th><th>Actions</th></tr>
+{% for e in evidence %}<tr><td>{{e.evidence_no}}</td><td><b>{{e.name}}</b><br><small>{{e.mime or 'Unknown type'}} · Added {{e.added_at}}</small></td><td>{{e.size}}</td><td class="mono hash">{{e.sha256}}</td><td><span class="status">{{e.status}}</span></td><td><a class="button secondary" href="{{url_for('view_evidence',case_id=case.case_id,evidence_id=e.id)}}" target="_blank">View Current</a> <a class="button secondary" href="{{url_for('evidence_versions',case_id=case.case_id,evidence_id=e.id)}}">Versions / Original</a> <a class="button secondary" href="{{url_for('download_evidence',case_id=case.case_id,evidence_id=e.id)}}">Download Copy</a> <a class="button secondary" href="{{url_for('edit_upload_evidence',case_id=case.case_id,evidence_id=e.id)}}">Upload Analyzed Copy</a> <form method="post" action="{{url_for('verify_single_evidence',case_id=case.case_id,evidence_id=e.id)}}" style="display:inline"><button type="submit">Verify This Evidence</button></form> {% if current_user and current_user.role == 'HIGHER_AUTHORITY' %}<form method="post" action="{{url_for('delete_evidence',case_id=case.case_id,evidence_id=e.id)}}" style="display:inline" onsubmit="return confirm('Delete this evidence? It will enter the 30-day Recently Deleted recovery window. No permanent deletion is available.')"><button class="danger" type="submit">Delete</button></form>{% endif %}</td></tr>{% endfor %}</table>
+<p class="muted">Every evidence <b>upload, view, copy download, verification, deletion, restoration, and version event</b> is recorded in the Chain of Custody. Viewing and downloading never modify the registered evidence. Integrity is <b>VERIFIED</b> only while the stored SHA-256 matches the current file.</p>{% else %}<p>No evidence registered.</p>{% endif %}</div>
+<div class="card full"><h2>Recent Chain-of-Custody Events</h2>{% if custody %}<table><tr><th>Time</th><th>Action</th><th>Evidence</th><th>Analyst</th><th>Notes</th></tr>
+{% for c in custody[:12] %}<tr><td>{{c.event_time}}</td><td>{{c.action}}</td><td>{{c.evidence_name or 'CASE'}}</td><td>{{c.analyst}}</td><td>{{c.notes}}</td></tr>{% endfor %}</table>{% else %}<p>No events.</p>{% endif %}</div></div>{% endblock %}

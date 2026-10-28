@@ -1,0 +1,3 @@
+{% extends "base.html" %}{% block content %}<div class="card"><div class="kicker">Forensic Audit Trail</div><h2>Chain of Custody & Activity Audit Trail — {{case.case_id}}</h2>
+{% if custody %}<table><tr><th>Time</th><th>Action</th><th>Evidence</th><th>Analyst</th><th>Notes</th></tr>
+{% for c in custody %}<tr><td>{{c.event_time}}</td><td>{{c.action}}</td><td>{{c.evidence_name or 'CASE'}}</td><td>{{c.analyst}}</td><td>{{c.notes}}</td></tr>{% endfor %}</table>{% else %}<p>No custody events.</p>{% endif %}</div>{% endblock %}

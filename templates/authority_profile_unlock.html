@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% block content %}
+<div class="card" style="max-width:520px;margin:auto">
+<div class="kicker">VERIFICATION REQUIRED</div><h2>View Profile — {{target.name}}</h2>
+<p class="muted">Enter your dedicated profile-view password to continue. You will not be logged into this user's account; you are opening a read-only profile view, and this action is logged.</p>
+<form method="post"><label>Profile-View Password</label><input type="password" name="profile_view_password" required autocomplete="off"><button>Continue to OTP</button></form>
+<p class="muted" style="margin-top:1rem"><a href="{{url_for('authority_dashboard')}}">Cancel</a></p>
+</div>{% endblock %}

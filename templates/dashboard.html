@@ -1,0 +1,21 @@
+{% extends "base.html" %}{% block content %}
+<div class="card" style="margin-bottom:20px"><div class="kicker">ACCESS CONTROL</div><h2>Authority & Member Access</h2><p>Register the first Room Authority here. Existing Authorities use Authority Login. Members use Member Registration/Login.</p><div class="actions"><a class="action" href="{{url_for('authority_register')}}"><b>AUTHORITY REGISTRATION</b><span>Create the Authority account and first permanent Room.</span></a><a class="action" href="{{url_for('authority_login')}}"><b>AUTHORITY LOGIN</b><span>Sign in as the Room Authority.</span></a><a class="action" href="{{url_for('register')}}"><b>MEMBER REGISTRATION</b><span>Register as a room member.</span></a><a class="action" href="{{url_for('login')}}"><b>MEMBER LOGIN</b><span>Sign in as an approved member.</span></a></div></div>
+<div class="grid"><div class="card"><div class="label">Cases</div><div class="stat">{{stats.cases}}</div></div>
+<div class="card"><div class="label">Evidence Items</div><div class="stat">{{stats.evidence}}</div></div>
+<div class="card"><div class="label">Verified</div><div class="stat good">{{stats.verified}}</div></div>
+<div class="card"><div class="label">Modified / Missing</div><div class="stat {% if stats.modified+stats.missing %}bad{% endif %}">{{stats.modified+stats.missing}}</div></div></div>
+<div class="card" style="margin-top:20px"><div class="kicker">SanHasher 2.0</div><h2>Forensic workflow</h2>
+<p>Hash data → register evidence → build a collection Merkle root → verify integrity → record custody → generate a report.</p>
+<div class="actions">
+<a class="action" href="{{url_for('text_hash')}}"><b>TEXT HASH</b><span>Generate all supported hashes and Base64 encoding.</span></a>
+<a class="action" href="{{url_for('file_hash')}}"><b>FILE HASH</b><span>Hash uploaded files and inspect metadata.</span></a>
+<a class="action" href="{{url_for('password_analysis')}}"><b>PASSWORD ANALYSIS</b><span>Hash format + dictionary matching + password strength analysis.</span></a>
+<a class="action" href="{{url_for('hash_identifier')}}"><b>HASH IDENTIFIER</b><span>Probabilistic format/length-based identification.</span></a>
+<a class="action" href="{{url_for('hash_to_text')}}"><b>HASH → TEXT</b><span>Bounded hash-to-text recovery using generated candidates only.</span></a><a class="action" href="{{url_for('compare')}}"><b>HASH COMPARISON</b><span>Compare two files using cryptographic fingerprints.</span></a>
+<a class="action" href="{{url_for('cases')}}"><b>CASE MANAGEMENT</b><span>Create cases and register evidence.</span></a>
+<a class="action" href="{{url_for('reports')}}"><b>FORENSIC REPORT</b><span>Generate a report with manifest and custody.</span></a>
+<a class="action" href="{{url_for('cases')}}"><b>MERKLE / TAMPER</b><span>Collection-level integrity and verification.</span></a>
+</div></div>
+<div class="card" style="margin-top:20px"><div class="kicker">Integrity status</div>
+<p><span class="good">✓ Verified: {{stats.verified}}</span> &nbsp; <span class="bad">✗ Modified: {{stats.modified}}</span> &nbsp; <span class="warn">⚠ Missing: {{stats.missing}}</span></p></div>
+{% endblock %}

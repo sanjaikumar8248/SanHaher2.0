@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% block content %}
+<div class="card"><div class="kicker">Working Version Upload</div><h2>Create Evidence Version — #{{evidence.evidence_no}} ({{evidence.name}})</h2>
+<p class="muted">Upload a modified working copy (binary-safe). The original registered evidence is preserved and never overwritten.</p>
+<form method="post" enctype="multipart/form-data"><label>Modified File</label><input type="file" name="modified_file" required>
+<label>Change Note</label><textarea name="change_note" placeholder="What changed and why"></textarea><button>Save as New Version</button></form>
+<p><a class="button secondary" href="{{url_for('evidence_versions',case_id=case.case_id,evidence_id=evidence.id)}}">View Versions</a> <a class="button secondary" href="{{url_for('case_detail',case_id=case.case_id)}}">Back to Case</a></p>
+</div>{% endblock %}

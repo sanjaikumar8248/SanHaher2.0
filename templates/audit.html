@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block content %}
+<div class="grid"><div class="card"><div class="label">Audit Events</div><div class="stat">{{events|length}}</div></div>
+<div class="card"><div class="label">Access Grant Events</div><div class="stat">{{grants|length}}</div></div>
+<div class="card"><div class="label">Access Chain Integrity</div><div class="stat {{'good' if grant_integrity else 'bad'}}">{{'VERIFIED' if grant_integrity else 'TAMPERED'}}</div></div></div>
+<div class="card full" style="margin-top:20px"><div class="kicker">Global Security Audit Log</div><h2>System-Wide Activity</h2>
+{% if events %}<table><tr><th>Time</th><th>User</th><th>Action</th><th>IP</th><th>Details</th></tr>
+{% for e in events %}<tr><td>{{e.event_time}}</td><td>{{e.name or 'system'}}</td><td><b>{{e.action}}</b></td><td>{{e.ip}}</td><td>{{e.details}}</td></tr>{% endfor %}</table>
+{% else %}<p>No audit events.</p>{% endif %}</div>
+<div class="card full" style="margin-top:20px"><div class="kicker">Immutable Access Grant Register</div><h2>Hash-Chained Access Events</h2>
+{% if grants %}<table><tr><th>Grant ID</th><th>User</th><th>Role</th><th>Action</th><th>By</th><th>Time</th><th>Hash</th></tr>
+{% for g in grants %}<tr><td>{{g.grant_id}}</td><td>{{g.user_name}}</td><td>{{g.role}}</td><td><b>{{g.action}}</b></td><td>{{g.authority_name}}</td><td>{{g.event_time}}</td><td class="mono hash">{{g.event_hash}}</td></tr>{% endfor %}</table>
+{% else %}<p>No access events.</p>{% endif %}</div>
+{% endblock %}

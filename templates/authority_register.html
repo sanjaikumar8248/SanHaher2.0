@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% block content %}
+<div class="card" style="max-width:620px;margin:auto">
+<div class="kicker">CREATE FIRST ROOM</div><h2>Authority Registration</h2>
+<p class="muted">One mobile number can create one Authority account and one permanent room. The Room ID is generated after registration.</p>
+<form method="post">
+<label>Full Name</label><input name="name" required>
+<label>Email</label><input name="email" type="email" required>
+<label>Mobile Number</label><input name="mobile" required>
+<label>Password</label><input name="password" type="password" required minlength="8">
+<label>Confirm Password</label><input name="confirm_password" type="password" required minlength="8">
+<label>Room / Organization Name</label><input name="room_name" placeholder="Optional">
+<button>Create Authority Account & Room</button>
+</form>
+<div class="actions" style="margin-top:1rem"><a class="action" href="{{url_for('authority_login')}}"><b>AUTHORITY LOGIN</b><span>Already have an Authority account? Sign in here.</span></a></div>
+</div>{% endblock %}

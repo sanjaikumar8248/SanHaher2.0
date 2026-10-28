@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% block content %}
+{% if current_user.role == 'HIGHER_AUTHORITY' %}
+<div class="page-grid">
+<div class="card"><div class="kicker">AUTHORITY</div><h2>Create Case</h2>
+<form method="post">
+<input type="hidden" name="action" value="CREATE">
+<label>Case ID</label><input name="case_id" placeholder="CASE-001" required>
+<label>Case Title</label><input name="case_title" required>
+<label>Team Lead (optional)</label><select name="team_lead"><option value="">No Team Lead</option>{% for u in room_users if u.role != 'HIGHER_AUTHORITY' and u.verified %}<option value="{{u.id}}">{{u.name}} — {{u.role}}</option>{% endfor %}</select>
+<button>Create Case</button>
+</form></div>
+<div class="card"><div class="kicker">ROOM</div><h2>Case Access Model</h2><p>Authority creates the case. A Team Lead is optional. Authority assigns members to each case. Room membership alone does not grant case access.</p></div>
+</div>
+{% else %}
+<div class="card"><div class="kicker">REQUEST</div><h2>Request a New Case</h2>
+<p class="muted">If Authority approves, you automatically become the Team Lead. The case cannot be transferred without Authority approval.</p>
+<form method="post">
+<input type="hidden" name="action" value="REQUEST">
+<label>Requested Case ID</label><input name="case_id" placeholder="CASE-001" required>
+<label>Case Title</label><input name="case_title" required>
+<label>Reason / Description</label><textarea name="description" placeholder="Why this case needs to be created"></textarea>
+<button>Send Case Request</button>
+</form></div>
+{% endif %}
+<div class="card full" style="margin-top:20px"><div class="kicker">ACCESSIBLE CASES</div><h2>My Assigned Cases</h2>
+{% if visible_cases %}<table><tr><th>Case</th><th>Title</th><th>Status</th><th>Created</th></tr>{% for c in visible_cases %}<tr><td><a class="button secondary" href="{{url_for('case_detail',case_id=c.case_id)}}">{{c.case_id}}</a></td><td>{{c.title}}</td><td>{{c.status}}</td><td>{{c.created_at}}</td></tr>{% endfor %}</table>{% else %}<p>No case access yet.</p>{% endif %}
+</div>
+{% endblock %}

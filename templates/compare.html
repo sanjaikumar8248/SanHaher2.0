@@ -1,0 +1,5 @@
+{% extends "base.html" %}{% block content %}<div class="card"><h2>Compare two evidence files</h2><form method="post" enctype="multipart/form-data">
+<div class="grid2"><div><label>Evidence A</label><input type="file" name="file_a" required></div><div><label>Evidence B</label><input type="file" name="file_b" required></div></div><button>Compare SHA-256</button></form></div>
+{% if result %}<div class="page-grid" style="margin-top:20px"><div class="card"><h2>{{result.a.info.name}}</h2><p>SHA-256</p><div class="mono hash">{{result.a.hashes['SHA-256']}}</div></div>
+<div class="card"><h2>{{result.b.info.name}}</h2><p>SHA-256</p><div class="mono hash">{{result.b.hashes['SHA-256']}}</div></div>
+<div class="card full"><h2 class="{% if result.identical %}good{% else %}bad{% endif %}">{% if result.identical %}✓ IDENTICAL CONTENT{% else %}✗ DIFFERENT CONTENT{% endif %}</h2></div></div>{% endif %}{% endblock %}

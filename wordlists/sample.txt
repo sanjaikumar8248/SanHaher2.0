@@ -1,0 +1,7 @@
+123456
+password
+admin
+letmein
+qwerty
+sanjai
+SanHasher

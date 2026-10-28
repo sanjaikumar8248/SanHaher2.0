@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% block content %}
+<div class="card" style="max-width:560px;margin:auto">
+<div class="kicker">MEMBER ACCESS</div><h2>Login to SanHasher 2.0</h2>
+<p class="muted">Members sign in with their registered email/mobile, password and OTP. Authority uses the separate Authority Login.</p>
+<form method="post">
+<label>Email or Mobile Number</label><input name="identifier" required placeholder="Registered email or mobile">
+<label>Password</label><input name="password" type="password" required autocomplete="current-password">
+<button>Continue to OTP</button>
+</form>
+<div class="actions" style="margin-top:1rem">
+<a class="action" href="{{url_for('authority_register')}}"><b>AUTHORITY REGISTRATION</b><span>Create the first Authority account and permanent Room.</span></a>
+<a class="action" href="{{url_for('authority_login')}}"><b>AUTHORITY LOGIN</b><span>Existing Authority accounts sign in here.</span></a>
+<a class="action" href="{{url_for('register')}}"><b>MEMBER REGISTRATION</b><span>Request membership in an Authority Room.</span></a>
+</div>
+<p class="muted" style="margin-top:1rem"><a href="{{url_for('forgot_password')}}">Forgot password?</a></p>
+</div>{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}{% block content %}
+<div class="card"><div class="kicker">User Profile (Read-Only — Access Logged)</div>
+<h2>{{user.name}}</h2>
+<p>Email: <b>{{user.email}}</b> &nbsp; Mobile: <b>{{user.mobile}}</b> &nbsp; Role: <b>{{user.role}}</b> &nbsp; Status: <b>{{'ACTIVE' if user.verified else 'REVOKED'}}</b></p>
+<p class="muted">Registered: {{user.created_at}} · Last login: {{user.last_login or '—'}}</p>
+<p class="muted">This is a read-only profile view unlocked with your profile-view password and OTP. You are not logged into this user's account.</p>
+</div>
+
+<div class="page-grid" style="margin-top:20px">
+<div class="card"><div class="kicker">Role / Access</div><h2>Change Role</h2>
+<form method="post" action="{{url_for('authority_change_role',user_id=user.id)}}">
+<label>Role</label><select name="role"><option {% if user.role=='EXAMINER' %}selected{% endif %}>EXAMINER</option><option {% if user.role=='ANALYST' %}selected{% endif %}>ANALYST</option><option {% if user.role=='INVESTIGATOR' %}selected{% endif %}>INVESTIGATOR</option></select>
+<button>Save Role Change</button></form>
+<form method="post" action="{{url_for('authority_access',user_id=user.id)}}" style="margin-top:14px">
+{% if user.verified %}<input type="hidden" name="action" value="REVOKE"><button class="danger" onclick="return confirm('Revoke access for this user?')">Revoke Access</button>
+{% else %}<input type="hidden" name="action" value="RESTORE"><button>Restore Access</button>{% endif %}
+</form>
+</div>
+<div class="card"><div class="kicker">Immutable Access History</div><h2>Grant / Revoke / Role Events</h2>
+{% if grants %}<table><tr><th>Grant ID</th><th>Action</th><th>Role</th><th>Time</th><th>Event Hash</th></tr>
+{% for g in grants %}<tr><td>{{g.grant_id}}</td><td><b>{{g.action}}</b></td><td>{{g.role}}</td><td>{{g.event_time}}</td><td class="mono hash">{{g.event_hash}}</td></tr>{% endfor %}</table>
+{% else %}<p>No access events yet.</p>{% endif %}</div>
+<div class="card full"><div class="kicker">Activity</div><h2>What this user has done (chain-of-custody events)</h2>
+{% if custody_events %}<table><tr><th>Time</th><th>Action</th><th>Evidence</th><th>Notes</th></tr>
+{% for c in custody_events %}<tr><td>{{c.event_time}}</td><td>{{c.action}}</td><td>{{c.evidence_name or 'CASE'}}</td><td>{{c.notes}}</td></tr>{% endfor %}</table>
+{% else %}<p>No recorded activity for this user yet.</p>{% endif %}</div>
+</div>
+<p style="margin-top:16px"><a class="button secondary" href="{{url_for('authority_dashboard')}}">Back to Authority Dashboard</a></p>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}{% block content %}
+
+<div class="card" style="margin-bottom:20px"><div class="kicker">Your Room</div><h2 class="mono" style="letter-spacing:1px">{{room.room_code}}</h2>
+<p class="muted">{{room.name}} — share this Registration ID with people you want to add. Only members who enter the current ID can request to join this room; only you approve them.</p>
+{% if room.change_count and room.change_count > 0 %}<p class="muted">Changed {{room.change_count}} time(s){% if room.previous_code %}, previous ID was <span class="mono">{{room.previous_code}}</span> (no longer usable){% endif %}{% if room.code_changed_at %} — last changed {{room.code_changed_at}}{% endif %}.</p>{% endif %}
+<details style="margin-top:10px"><summary style="cursor:pointer;color:var(--accent)">Change Room ID</summary>
+<p class="muted" style="margin-top:8px">The 1st change generates a new ID the same way as your original one (from your mobile number). The 2nd change and every one after derives the new ID's prefix from a SHA-256 hash of the previous ID instead. Anyone with the old ID can no longer use it to register.</p>
+<form method="post" action="{{url_for('authority_regenerate_room_id')}}" onsubmit="return confirm('Change your Room ID now? The current ID will stop working for new registrations immediately.')">
+<label>Confirm your login password</label><input type="password" name="current_login_password" required>
+<button>Generate New Room ID</button></form></details></div>
+<div class="grid"><div class="card"><div class="label">Authorized Users</div><div class="stat">{{users|length}}</div></div><div class="card"><div class="label">Immutable Access Events</div><div class="stat">{{grants|length}}</div></div><div class="card"><div class="label">Audit Chain</div><div class="stat {{'good' if integrity else 'bad'}}">{{'VERIFIED' if integrity else 'TAMPERED'}}</div></div><div class="card"><div class="label">Privilege</div><div class="stat" style="font-size:20px">HIGHER AUTHORITY</div></div></div>
+<div class="page-grid" style="margin-top:20px"><div class="card full"><div class="kicker">CASE CREATION REQUESTS</div><h2>Pending Case Requests ({{case_requests|length}})</h2>
+{% if case_requests %}<table><tr><th>Requested By</th><th>Case ID</th><th>Title</th><th>Description</th><th>Submitted</th><th>Decision</th></tr>
+{% for r in case_requests %}<tr><td>{{r.requester_name}}</td><td>{{r.case_id}}</td><td>{{r.title}}</td><td>{{r.description or '—'}}</td><td>{{r.created_at}}</td><td>
+<form method="post" action="{{url_for('authority_decide_case_request',request_id=r.id)}}" style="display:inline"><input type="hidden" name="decision" value="APPROVE"><button>Approve &amp; Make Team Lead</button></form>
+<form method="post" action="{{url_for('authority_decide_case_request',request_id=r.id)}}" style="display:inline"><input type="hidden" name="decision" value="REJECT"><button class="danger">Reject</button></form></td></tr>{% endfor %}</table>
+{% else %}<p>No pending case requests.</p>{% endif %}</div>
+
+<div class="card full"><div class="kicker">Pending Approval</div><h2>Registration Requests ({{pending|length}})</h2>
+{% if pending %}<table><tr><th>Name</th><th>Email</th><th>Mobile</th><th>Requested Role</th><th>Submitted</th><th>Decision</th></tr>
+{% for p in pending %}<tr><td><b>{{p.name}}</b></td><td>{{p.email}}</td><td>{{p.mobile}}</td><td>{{p.role}}</td><td>{{p.created_at}}</td>
+<td><form method="post" action="{{url_for('authority_decide_registration',user_id=p.id)}}" style="display:inline"><input type="hidden" name="decision" value="APPROVE"><button>Grant Access</button></form>
+<form method="post" action="{{url_for('authority_decide_registration',user_id=p.id)}}" style="display:inline" onsubmit="return confirm('Reject this registration?')"><input type="hidden" name="decision" value="REJECT"><button class="danger">Reject</button></form></td></tr>{% endfor %}</table>
+{% else %}<p>No pending registrations.</p>{% endif %}</div>
+<div class="card full"><div class="kicker">Pending Approval</div><h2>Password Reset Requests ({{resets|length}})</h2>
+{% if resets %}<table><tr><th>Name</th><th>Email</th><th>Mobile</th><th>Requested</th><th>Decision</th></tr>
+{% for r in resets %}<tr><td><b>{{r.name}}</b></td><td>{{r.email}}</td><td>{{r.mobile}}</td><td>{{r.requested_at}}</td>
+<td><form method="post" action="{{url_for('authority_decide_reset',request_id=r.id)}}" style="display:inline"><input type="hidden" name="decision" value="APPROVE"><button>Approve &amp; Issue Temp Password</button></form>
+<form method="post" action="{{url_for('authority_decide_reset',request_id=r.id)}}" style="display:inline" onsubmit="return confirm('Reject this reset request?')"><input type="hidden" name="decision" value="REJECT"><button class="danger">Reject</button></form></td></tr>{% endfor %}</table>
+{% else %}<p>No pending password reset requests.</p>{% endif %}</div>
+<div class="card"><div class="kicker">Provisioning</div><h2>Add Member Directly</h2><p class="muted">Members can also self-register at /register using your Room ID above and wait for your approval there. This form adds and activates someone directly into your room without them registering themselves.</p>
+<form method="post" action="{{url_for('authority_users')}}">
+<label>Full Name</label><input name="name" required>
+<label>Email</label><input name="email" type="email" required>
+<label>Mobile</label><input name="mobile" required>
+<label>Role</label><select name="role"><option>EXAMINER</option><option>ANALYST</option><option>INVESTIGATOR</option></select>
+<label>Initial Login Password (optional)</label><input name="initial_password" type="password" minlength="8" placeholder="Leave blank to auto-generate one">
+<p class="muted" style="margin:4px 0 0">Set one yourself, or leave it blank and one will be generated and shown to you once — either way, you must relay it to the member yourself; they are not emailed or texted automatically.</p>
+<button>Grant Access &amp; Create Account</button></form></div>
+<div class="card"><div class="kicker">Authority Rule</div><h2>Immutable Administration</h2><ul><li>Only Higher Authority can grant or revoke access.</li><li>Every grant/revoke/role event gets a permanent event ID and hash-chain position.</li><li>No audit or access event can be edited or deleted.</li><li>Authority profile views and privileged actions are themselves logged.</li><li>Evidence deletion is authority-only and always triggers mandatory notifications.</li></ul></div>
+<div class="card full"><div class="kicker">User Profiles</div><h2>All Authorized Users</h2><table><tr><th>ID</th><th>Name</th><th>Email</th><th>Mobile</th><th>Role</th><th>Status</th><th>Created</th><th>Last Login</th><th>Action</th></tr>{% for u in users %}<tr><td>{{u.id}}</td><td><b>{{u.name}}</b></td><td>{{u.email}}</td><td>{{u.mobile}}</td><td>{{u.role}}</td><td>{{'ACTIVE' if u.verified else 'REVOKED'}}</td><td>{{u.created_at}}</td><td>{{u.last_login or '—'}}</td><td><a class="button secondary" href="{{url_for('authority_profile',user_id=u.id)}}">View Profile</a></td></tr>{% endfor %}</table></div>
+<div class="card full"><div class="kicker">Immutable Access Grant Register</div><h2>Who received access, when, and by whom</h2><p class="muted">These records are append-only. Revocation and role changes create new records; earlier grants are never edited.</p><table><tr><th>Grant ID</th><th>User</th><th>Role</th><th>Action</th><th>Granted By</th><th>Date / Time</th><th>Event Hash</th></tr>{% for g in grants %}<tr><td>{{g.grant_id}}</td><td>{{g.user_name}}<br><small>{{g.email}}</small></td><td>{{g.role}}</td><td><b>{{g.action}}</b></td><td>{{g.authority_name or g.granted_by}}</td><td>{{g.event_time}}</td><td class="mono hash">{{g.event_hash}}</td></tr>{% endfor %}</table></div></div>{% endblock %}

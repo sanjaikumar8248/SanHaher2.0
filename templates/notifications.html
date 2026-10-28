@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block content %}
+<div class="card"><div class="kicker">Mandatory Notifications</div><h2>Your Notifications</h2>
+{% if notifications %}<table><tr><th>Time</th><th>Title</th><th>Message</th><th>Severity</th><th>Status</th><th></th></tr>
+{% for n in notifications %}<tr><td>{{n.event_time}}</td><td><b>{{n.title}}</b></td><td>{{n.message}}</td>
+<td><span class="{{'bad' if n.severity in ['WARNING','ERROR'] else 'good' if n.severity=='SUCCESS' else ''}}">{{n.severity}}</span></td>
+<td>{{'Read' if n.read_at else 'Unread'}}</td>
+<td>{% if not n.read_at %}<form method="post" action="{{url_for('notification_read',notification_id=n.id)}}"><button class="button secondary">Mark Read</button></form>{% endif %}</td></tr>{% endfor %}</table>
+{% else %}<p>No notifications yet.</p>{% endif %}</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ title }} · SanHasher 2.0</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<body><div class="layout"><aside class="sidebar">
+<a class="brand" href="{{ url_for('dashboard') }}">SANHASHER 2.0<small>FORENSIC CRYPTOGRAPHY SUITE</small></a>
+<div class="nav-title">Cryptographic Tools</div><nav class="nav">
+<a href="{{ url_for('text_hash') }}">Text Hash Generator</a><a href="{{ url_for('file_hash') }}">File Hash Generator</a>
+<a href="{{ url_for('password_analysis') }}">Password Hash Analysis</a><a href="{{ url_for('hash_identifier') }}">Hash Identifier</a>
+<a href="{{ url_for('hash_to_text') }}">Hash → Text Recovery</a><a href="{{ url_for('compare') }}">File Hash Comparison</a></nav>
+<div class="nav-title">Forensic Engine</div><nav class="nav"><a href="{{ url_for('cases') }}">Case Management</a>
+{% for c in nav_cases[:8] %}<a href="{{ url_for('case_detail', case_id=c.case_id) }}">↳ {{ c.case_id }}</a>{% endfor %}
+<a href="{{ url_for('reports') }}">Forensic Reports</a>{% if current_user and current_user.role == 'HIGHER_AUTHORITY' %}<a href="{{ url_for('authority_dashboard') }}">Higher Authority</a><a href="{{ url_for('audit_log') }}">Global Audit</a>{% endif %}<a href="{{ url_for('notifications') }}">Notifications {% if unread_notifications %}<span class="badge">{{ unread_notifications }}</span>{% endif %}</a></nav>
+<div class="nav-title">Access</div><nav class="nav"><a href="{{ url_for('authority_register') }}">Authority Registration</a><a href="{{ url_for('authority_login') }}">Authority Login</a><a href="{{ url_for('register') }}">Member Registration</a><a href="{{ url_for('login') }}">Member Login</a></nav><div class="nav-title">Project</div><nav class="nav"><a href="{{ url_for('about') }}">About / Limitations</a>{% if current_user %}<a href="{{ url_for('account_password') }}">Change Password</a><a href="{{ url_for('logout') }}">Logout ({{ current_user.name }} · {{ current_user.role }})</a>{% endif %}</nav>
+</aside><main class="main"><div class="topbar"><div><h1>{{ title }}</h1>
+<div class="subtitle">Forensic hashing · evidence integrity · version history · chain of custody</div></div></div>
+{% with messages = get_flashed_messages(with_categories=true) %}{% for category,msg in messages %}<div class="alert {{category}}">{{msg}}</div>{% endfor %}{% endwith %}
+{% block content %}{% endblock %}</main></div></body></html>

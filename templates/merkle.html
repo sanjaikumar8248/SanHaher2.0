@@ -1,0 +1,3 @@
+{% extends "base.html" %}{% block content %}<div class="card"><div class="kicker">Collection Integrity</div><h2>Merkle Tree — {{case.case_id}}</h2>
+<p>Registered evidence SHA-256 values are used as Merkle leaves.</p>{% if root %}<p><b>ROOT HASH</b></p><div class="mono hash">{{root}}</div>{% else %}<p>No evidence leaves available.</p>{% endif %}
+{% for i,level in layers %}<div class="merkle-level"><b>Level {{i}}</b>{% for node in level %}<div class="node">{{node}}</div>{% endfor %}</div>{% endfor %}</div>{% endblock %}

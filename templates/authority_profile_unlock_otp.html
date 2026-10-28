@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% block content %}
+<div class="card" style="max-width:520px;margin:auto">
+<div class="kicker">One-Time Password</div><h2>Profile-View OTP</h2>
+<p>Enter the OTP to confirm you want to view this profile.</p>
+<form method="post"><label>6-digit OTP</label><input name="otp" inputmode="numeric" maxlength="6" required><button>Verify &amp; View Profile</button></form>
+{% if demo_otp %}<p class="muted">Local development OTP (no email delivery configured): <span class="mono">{{demo_otp}}</span></p>{% else %}<p class="muted">A one-time code was emailed to you. Check your inbox (and spam folder).</p>{% endif %}
+</div>{% endblock %}

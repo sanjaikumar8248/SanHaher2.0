@@ -1,0 +1,65 @@
+{% extends "base.html" %}{% block content %}
+<div class="page-grid">
+  <div class="card">
+    <div class="kicker">Offline Candidate Matching · User Wordlist</div>
+    <h2>Hash → Text Recovery</h2>
+    <p class="subtitle">Upload your own wordlist. SanHasher hashes each candidate locally and compares it with the target hash. This is candidate matching, not hash decryption.</p>
+    <form method="post" enctype="multipart/form-data">
+      <label>Hash Type</label>
+      <select name="algorithm">
+        {% for a in algorithms %}<option value="{{a}}" {% if a==algorithm %}selected{% endif %}>{{a}}</option>{% endfor %}
+      </select>
+      <label>Target Hash</label>
+      <input class="mono" name="target_hash" value="{{target}}" placeholder="Paste the hexadecimal hash" required>
+      <label>Wordlist</label>
+      <input type="file" name="wordlist" accept=".txt,.lst,.dic,text/plain" required>
+      <p class="footer-note">Supported wordlists: TXT, LST, DIC. One candidate per line. Matching is performed locally.</p>
+      <button type="submit">Start Wordlist Recovery</button>
+    </form>
+  </div>
+
+  {% if result %}
+  <div class="card">
+    <h2>{% if result.match %}<span class="good">✓ MATCH FOUND</span>{% else %}<span class="bad">✗ NO MATCH FOUND</span>{% endif %}</h2>
+    {% if result.match %}
+      <p><b>Recovered Text:</b></p>
+      <div class="result-value mono">{{result.candidate}}</div>
+      {% if result.strength %}
+      <div class="status-panel">
+        <b>Password Strength:</b> {{result.strength.rating}} · Score {{result.strength.score}}/100
+        {% if result.strength.findings %}<div class="footer-note">{{result.strength.findings|join(' · ')}}</div>{% endif %}
+      </div>
+      {% endif %}
+    {% else %}
+      <p>The target hash was not found among the candidates in the uploaded wordlist.</p>
+      <p class="footer-note">A failed match does not prove that the original plaintext does not exist; it only means it was not present in this wordlist.</p>
+    {% endif %}
+    <table>
+      <tr><th>Algorithm</th><td>{{algorithm}}</td></tr>
+      <tr><th>Wordlist</th><td>{{result.wordlist}}</td></tr>
+      <tr><th>Attempts</th><td>{{"{:,}".format(result.attempts)}}</td></tr>
+      <tr><th>Speed</th><td>{{"{:,.0f}".format(result.speed)}} hashes/sec</td></tr>
+      <tr><th>Elapsed</th><td>{{"{:.3f}".format(result.elapsed)}} sec</td></tr>
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card" style="margin-top:20px">
+  <div class="kicker">Workflow</div>
+  <pre>Target Hash + Algorithm
+          ↓
+     Upload Wordlist
+          ↓
+   Read candidate line
+          ↓
+     Hash candidate
+          ↓
+   Compare with target
+       ↙        ↘
+    MATCH     NO MATCH
+      ↓           ↓
+  Plaintext    Next line</pre>
+  <p class="footer-note">Use only wordlists and hashes you are authorized to analyze. SanHasher performs this process locally and does not attempt online login attacks.</p>
+</div>
+{% endblock %}

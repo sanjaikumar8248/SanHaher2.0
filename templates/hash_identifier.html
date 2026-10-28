@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% block content %}<div class="page-grid"><div class="card"><h2>Identify a hash</h2>
+<form method="post"><label>Hash value</label><input class="mono" name="hash_value" value="{{value}}" placeholder="5f4dcc3b5aa765d61d8327deb882cf99" required><button>Analyze</button></form></div>
+{% if result is not none %}<div class="card"><h2>Possible Hash Types</h2><table><tr><th>Candidate</th><th>Assessment</th></tr>
+{% for x,a in result %}<tr><td>{{x}}</td><td>{{a}}</td></tr>{% endfor %}</table><div class="footer-note">Length/format cannot uniquely identify an algorithm. Results are probabilistic.</div></div>{% endif %}</div>{% endblock %}
